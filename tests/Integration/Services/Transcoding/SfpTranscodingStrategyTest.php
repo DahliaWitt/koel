@@ -3,6 +3,7 @@
 namespace Tests\Integration\Services\Transcoding;
 
 use App\Enums\SongStorageType;
+use App\Enums\TranscodeCodec;
 use App\Helpers\Ulid;
 use App\Models\Song;
 use App\Models\Transcode;
@@ -44,12 +45,12 @@ class SfpTranscodingStrategyTest extends TestCase
         File::expects('ensureDirectoryExists')->with(dirname($destination));
         File::expects('size')->with($destination)->andReturn(1_024);
 
-        $this->transcoder->expects('transcode')->with('/tmp/song.flac', $destination, 128);
+        $this->transcoder->expects('transcode')->with('/tmp/song.flac', $destination, 128, TranscodeCodec::Aac);
 
         File::expects('hash')->with($destination)->andReturn('mocked-checksum');
         File::expects('delete')->with('/tmp/song.flac');
 
-        $this->strategy->getTranscodeLocation($song, 128);
+        $this->strategy->getTranscodeLocation($song, 128, TranscodeCodec::Aac);
 
         $this->assertDatabaseHas(Transcode::class, [
             'song_id' => $song->id,
@@ -74,7 +75,11 @@ class SfpTranscodingStrategyTest extends TestCase
 
         File::expects('hash')->with('/path/to/transcode.m4a')->andReturn('mocked-checksum');
 
-        $transcodedPath = $this->strategy->getTranscodeLocation($transcode->song, $transcode->bit_rate);
+        $transcodedPath = $this->strategy->getTranscodeLocation(
+            $transcode->song,
+            $transcode->bit_rate,
+            TranscodeCodec::Aac,
+        );
 
         self::assertSame($transcode->location, $transcodedPath);
     }
@@ -104,13 +109,13 @@ class SfpTranscodingStrategyTest extends TestCase
 
         File::expects('ensureDirectoryExists')->with(dirname($destination));
 
-        $this->transcoder->expects('transcode')->with('/tmp/song.flac', $destination, 128);
+        $this->transcoder->expects('transcode')->with('/tmp/song.flac', $destination, 128, TranscodeCodec::Aac);
 
         File::expects('hash')->with($destination)->andReturn('mocked-checksum');
         File::expects('size')->with($destination)->andReturn(1_024);
         File::expects('delete')->with('/tmp/song.flac');
 
-        $this->strategy->getTranscodeLocation($song, 128);
+        $this->strategy->getTranscodeLocation($song, 128, TranscodeCodec::Aac);
         self::assertSame($destination, $transcode->refresh()->location);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services\Transcoding;
 
 use App\Enums\SongStorageType;
+use App\Enums\TranscodeCodec;
 use App\Helpers\Ulid;
 use App\Models\Song;
 use App\Models\Transcode;
@@ -12,14 +13,15 @@ use Illuminate\Support\Facades\File;
 
 class CloudTranscodingStrategy extends TranscodingStrategy
 {
-    public function getTranscodeLocation(Song $song, int $bitRate): string
+    public function getTranscodeLocation(Song $song, int $bitRate, TranscodeCodec $codec): string
     {
         $storage = CloudStorageFactory::make($song->storage);
 
-        $transcode = $this->findTranscodeBySongAndBitRate($song, $bitRate) ?? $this->createTranscode(
+        $transcode = $this->findTranscode($song, $bitRate, $codec) ?? $this->createTranscode(
             $storage,
             $song,
             $bitRate,
+            $codec,
         );
 
         return $storage->getPresignedUrl($transcode->location);
@@ -32,17 +34,18 @@ class CloudTranscodingStrategy extends TranscodingStrategy
      * 3. Store the transcode record in the database.
      * 4. Delete the temporary file.
      */
-    private function createTranscode(CloudStorage $storage, Song $song, int $bitRate): Transcode
+    private function createTranscode(CloudStorage $storage, Song $song, int $bitRate, TranscodeCodec $codec): Transcode
     {
-        $tmpDestination = artifact_path(sprintf('tmp/%s.m4a', Ulid::generate()));
+        $tmpDestination = artifact_path(sprintf('tmp/%s.%s', Ulid::generate(), $codec->extension()));
 
         $this->transcoder->transcode(
             $storage->getPresignedUrl($song->storage_metadata->getPath()),
             $tmpDestination,
             $bitRate,
+            $codec,
         );
 
-        $key = sprintf('transcodes/%d/%s.m4a', $bitRate, Ulid::generate());
+        $key = sprintf('transcodes/%s/%s.%s', $codec->cacheDirectory($bitRate), Ulid::generate(), $codec->extension());
 
         try {
             $storage->uploadToStorage($key, $tmpDestination);
@@ -51,6 +54,7 @@ class CloudTranscodingStrategy extends TranscodingStrategy
                 $song,
                 $key,
                 $bitRate,
+                $codec,
                 File::hash($tmpDestination),
                 File::size($tmpDestination),
             );

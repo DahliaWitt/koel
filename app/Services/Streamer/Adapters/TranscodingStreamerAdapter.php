@@ -2,16 +2,23 @@
 
 namespace App\Services\Streamer\Adapters;
 
+use App\Enums\TranscodeCodec;
 use App\Models\Song;
 use App\Services\Streamer\Adapters\Concerns\StreamsLocalPath;
 use App\Services\Transcoding\TranscodeStrategyFactory;
 use App\Values\RequestedStreamingConfig;
+use Illuminate\Container\Attributes\Config;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
 class TranscodingStreamerAdapter implements StreamerAdapter
 {
     use StreamsLocalPath;
+
+    public function __construct(
+        #[Config('koel.streaming.bitrate')]
+        private readonly int $defaultBitRate,
+    ) {}
 
     public function stream(Song $song, ?RequestedStreamingConfig $config = null)
     {
@@ -21,14 +28,15 @@ class TranscodingStreamerAdapter implements StreamerAdapter
             'ffmpeg not found or not executable.',
         );
 
-        $bitRate = $config?->bitRate ?: config('koel.streaming.bitrate');
+        $codec = $config->codec ?? TranscodeCodec::Aac;
+        $bitRate = $config?->bitRate ?: $this->defaultBitRate;
 
-        $transcodePath = TranscodeStrategyFactory::make($song->storage)->getTranscodeLocation($song, $bitRate);
+        $transcodePath = TranscodeStrategyFactory::make($song->storage)->getTranscodeLocation($song, $bitRate, $codec);
 
         if (Str::startsWith($transcodePath, ['http://', 'https://'])) {
             return response()->redirectTo($transcodePath);
         }
 
-        $this->streamLocalPath($transcodePath);
+        $this->streamLocalPath($transcodePath, $codec->mimeType());
     }
 }
