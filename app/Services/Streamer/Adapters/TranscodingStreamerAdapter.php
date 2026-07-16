@@ -19,12 +19,14 @@ class TranscodingStreamerAdapter implements StreamerAdapter
     public function __construct(
         #[Config('koel.streaming.bitrate')]
         private readonly int $defaultBitRate,
+        #[Config('koel.streaming.ffmpeg_path')]
+        private readonly ?string $ffmpegPath,
     ) {}
 
     public function stream(Song $song, ?RequestedStreamingConfig $config = null)
     {
         abort_unless(
-            is_executable(config('koel.streaming.ffmpeg_path')),
+            $this->ffmpegPath !== null && is_executable($this->ffmpegPath),
             Response::HTTP_INTERNAL_SERVER_ERROR,
             'ffmpeg not found or not executable.',
         );
@@ -33,11 +35,18 @@ class TranscodingStreamerAdapter implements StreamerAdapter
 
         $transcodePath = TranscodeStrategyFactory::make($song->storage)->getTranscodeLocation($song, $bitRate);
 
-        if (Str::startsWith($transcodePath, ['http://', 'https://'])) {
-            return response()->redirectTo($transcodePath);
+        return $this->streamTranscodeLocation($transcodePath);
+    }
+
+    public function streamTranscodeLocation(string $location)
+    {
+        if (Str::startsWith($location, ['http://', 'https://'])) {
+            return response()->redirectTo($location);
         }
 
-        $mimeType = TranscodeCodec::fromExtension(File::extension($transcodePath))->mimeType();
-        $this->streamLocalPath($transcodePath, $mimeType);
+        $mimeType = TranscodeCodec::fromExtension(File::extension($location))->mimeType();
+        $this->streamLocalPath($location, $mimeType);
+
+        return null;
     }
 }

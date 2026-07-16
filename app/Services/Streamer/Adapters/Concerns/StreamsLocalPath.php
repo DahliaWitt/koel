@@ -2,6 +2,8 @@
 
 namespace App\Services\Streamer\Adapters\Concerns;
 
+use App\Services\Streamer\RangeContentLengthOutputWriter;
+use DaveRandom\Resume\DefaultOutputWriter;
 use DaveRandom\Resume\FileResource;
 use DaveRandom\Resume\InvalidRangeHeaderException;
 use DaveRandom\Resume\NonExistentFileException;
@@ -27,7 +29,14 @@ trait StreamsLocalPath
 
             $rangeSet = RangeSet::createFromHeader($rangeHeader);
             $resource = new FileResource($path, $contentType ?? File::mimeType($path));
-            (new ResourceServlet($resource))->sendResource($rangeSet);
+            $outputWriter = $rangeSet
+                ? new RangeContentLengthOutputWriter(
+                    new DefaultOutputWriter(),
+                    $rangeSet->getRangesForSize($resource->getLength()),
+                )
+                : null;
+
+            (new ResourceServlet($resource))->sendResource($rangeSet, $outputWriter);
         } catch (InvalidRangeHeaderException) {
             abort(Response::HTTP_BAD_REQUEST);
         } catch (UnsatisfiableRangeException) {

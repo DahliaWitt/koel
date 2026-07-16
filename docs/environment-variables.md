@@ -107,6 +107,7 @@ Required when `STORAGE_DRIVER=webdav`.
 | `TRANSCODE_BIT_RATE` | The bit rate (in kbps) for transcoded audio. Higher values mean better quality but slower streaming. | `128` |
 | `TRANSCODE_AAC_FAST` | Whether to use FFmpeg's faster AAC coding algorithm. Set to `false` to use its default AAC coder. | `true` |
 | `TRANSCODE_CODEC` | The codec used for transcoding. Options: `aac`, `opus`. Existing transcoded files are reused as-is, regardless of this setting. | `aac` |
+| `TRANSCODE_PROGRESSIVE` | Whether web clients can stream Opus audio before the whole track has finished transcoding. | `true` |
 | `FFMPEG_PATH` | The full path to the ffmpeg binary. Automatically detected if left empty. | _(auto-detected)_ |
 | `TRANSCODE_TIMEOUT` | The maximum time in seconds allowed for transcoding a single file. Increase for very large files. `0` disables the timeout. | `300` |
 

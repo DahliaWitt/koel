@@ -8,6 +8,7 @@ use App\Models\Song;
 use App\Services\Streamer\Adapters\LocalStreamerAdapter;
 use App\Services\Streamer\Adapters\PhpStreamerAdapter;
 use App\Services\Streamer\Adapters\PodcastStreamerAdapter;
+use App\Services\Streamer\Adapters\ProgressiveTranscodingStreamerAdapter;
 use App\Services\Streamer\Adapters\S3CompatibleStreamerAdapter;
 use App\Services\Streamer\Adapters\TranscodingStreamerAdapter;
 use App\Services\Streamer\Adapters\XAccelRedirectStreamerAdapter;
@@ -123,6 +124,44 @@ class StreamerTest extends TestCase
         self::assertInstanceOf(TranscodingStreamerAdapter::class, $streamer->getAdapter());
 
         config(['koel.streaming.transcode_required_mime_types' => $backupConfig]);
+    }
+
+    #[Test]
+    public function useProgressiveAdapterOnlyForAutomaticOpusCompatibilityTranscoding(): void
+    {
+        config([
+            'koel.streaming.progressive' => true,
+            'koel.streaming.ffmpeg_path' => PHP_BINARY,
+            'koel.streaming.transcode_required_mime_types' => ['audio/aiff'],
+        ]);
+        $song = Song::factory()->createOne([
+            'storage' => SongStorageType::LOCAL,
+            'path' => '/tmp/test.aiff',
+            'mime_type' => 'audio/aiff',
+        ]);
+
+        $streamer = new Streamer($song, config: RequestedStreamingConfig::make(progressive: true));
+
+        self::assertInstanceOf(ProgressiveTranscodingStreamerAdapter::class, $streamer->getAdapter());
+    }
+
+    #[Test]
+    public function useCompletedTranscodingAdapterWhenProgressiveStreamingIsDisabled(): void
+    {
+        config([
+            'koel.streaming.progressive' => false,
+            'koel.streaming.ffmpeg_path' => PHP_BINARY,
+            'koel.streaming.transcode_required_mime_types' => ['audio/aiff'],
+        ]);
+        $song = Song::factory()->createOne([
+            'storage' => SongStorageType::LOCAL,
+            'path' => '/tmp/test.aiff',
+            'mime_type' => 'audio/aiff',
+        ]);
+
+        $streamer = new Streamer($song, config: RequestedStreamingConfig::make(progressive: true));
+
+        self::assertInstanceOf(TranscodingStreamerAdapter::class, $streamer->getAdapter());
     }
 
     #[Test]

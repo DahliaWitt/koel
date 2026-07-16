@@ -3,13 +3,17 @@
 namespace Tests\Unit\Services\Transcoding;
 
 use App\Enums\TranscodeCodec;
+use App\Exceptions\ClientDisconnectedException;
 use App\Exceptions\TranscodingFailedException;
 use App\Services\Transcoding\Transcoder;
+use Illuminate\Process\FakeProcessResult;
+use Illuminate\Process\InvokedProcess;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
+use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Tests\TestCase;
@@ -135,6 +139,186 @@ class TranscoderTest extends TestCase
 
         $transcoder = new Transcoder(transcodeTimeout: 300, ffmpegPath: '/usr/bin/ffmpeg');
         $transcoder->transcode('/path/to/song.flac', '/path/to/output.m4a', 128, TranscodeCodec::AAC);
+    }
+
+    #[Test]
+    public function streamProgressivelyFromRequestedOffset(): void
+    {
+        Process::fake([
+            '*' => Process::describe()->output(['webm-header', 'opus-audio'])->runsFor(2),
+        ]);
+
+        $chunks = [];
+        $events = [];
+        $transcoder = new Transcoder(transcodeTimeout: 300, ffmpegPath: '/usr/bin/ffmpeg');
+        $transcoder->streamProgressively('/path/to/song.aiff', 256, 145.5, static function (string $chunk) use (
+            &$chunks,
+            &$events,
+        ): void {
+            $chunks[] = $chunk;
+            $events[] = 'chunk';
+        });
+        $events[] = 'complete';
+
+        self::assertSame(["webm-header\n", "opus-audio\n"], $chunks);
+        self::assertSame(['chunk', 'chunk', 'complete'], $events);
+        Process::assertRanTimes(static function (PendingProcess $process): bool {
+            return (
+                $process->command === [
+                    '/usr/bin/ffmpeg',
+                    '-hide_banner',
+                    '-loglevel',
+                    'error',
+                    '-nostdin',
+                    '-ss',
+                    '145.5',
+                    '-i',
+                    '/path/to/song.aiff',
+                    '-map',
+                    '0:a:0',
+                    '-vn',
+                    '-c:a',
+                    'libopus',
+                    '-application',
+                    'audio',
+                    '-b:a',
+                    '256k',
+                    '-output_ts_offset',
+                    '145.5',
+                    '-f',
+                    'webm',
+                    '-live',
+                    '1',
+                    '-cluster_time_limit',
+                    '1000',
+                    '-flush_packets',
+                    '1',
+                    'pipe:1',
+                ]
+                && $process->quietly
+            );
+        }, 1);
+    }
+
+    #[Test]
+    public function progressiveTranscodingReportsStderrWithoutBufferingStdout(): void
+    {
+        Process::fake([
+            '*' => Process::describe()->errorOutput('invalid audio')->exitCode(1),
+        ]);
+
+        $this->expectException(TranscodingFailedException::class);
+        $this->expectExceptionMessage('invalid audio');
+
+        (new Transcoder(transcodeTimeout: 300, ffmpegPath: '/usr/bin/ffmpeg'))->streamProgressively(
+            '/path/to/song.aiff',
+            128,
+            0,
+            static function (string $chunk): void {},
+        );
+    }
+
+    #[Test]
+    public function stopsAndReapsProgressiveProcessWhenChunkConsumerFails(): void
+    {
+        $pendingProcess = Mockery::mock(PendingProcess::class);
+        $invokedProcess = Mockery::mock(InvokedProcess::class);
+
+        Process::expects('timeout')->with(300)->andReturn($pendingProcess);
+        $pendingProcess->expects('quietly')->andReturnSelf();
+        $pendingProcess
+            ->expects('start')
+            ->withArgs(static fn (array $command, callable $handler): bool => true)
+            ->andReturn($invokedProcess);
+        $invokedProcess
+            ->expects('waitUntil')
+            ->andReturnUsing(static function (callable $handler): FakeProcessResult {
+                $handler('out', 'audio');
+
+                return new FakeProcessResult();
+            });
+        $invokedProcess->expects('stop')->with(1)->once();
+
+        $this->expectException(ClientDisconnectedException::class);
+
+        (new Transcoder(transcodeTimeout: 300, ffmpegPath: '/usr/bin/ffmpeg'))->streamProgressively(
+            '/path/to/song.aiff',
+            256,
+            0,
+            static fn () => throw new ClientDisconnectedException(),
+        );
+    }
+
+    #[Test]
+    public function preservesChunkConsumerFailureWithFakeProcess(): void
+    {
+        Process::fake([
+            '*' => Process::describe()->output('audio')->runsFor(2),
+        ]);
+
+        $this->expectException(ClientDisconnectedException::class);
+
+        (new Transcoder(transcodeTimeout: 300, ffmpegPath: '/usr/bin/ffmpeg'))->streamProgressively(
+            '/path/to/song.aiff',
+            256,
+            0,
+            static fn () => throw new ClientDisconnectedException(),
+        );
+    }
+
+    #[Test]
+    public function streamProgressivelyFromBeginningWithoutSeekArguments(): void
+    {
+        Process::fake();
+
+        (new Transcoder(transcodeTimeout: 0, ffmpegPath: '/usr/bin/ffmpeg'))->streamProgressively(
+            '/path/to/song.aiff',
+            128,
+            0.0,
+            static function (string $chunk): void {},
+        );
+
+        Process::assertRanTimes(static function (PendingProcess $process): bool {
+            return (
+                !in_array('-ss', $process->command, true)
+                && !in_array('-output_ts_offset', $process->command, true)
+                && $process->timeout === null
+            );
+        }, 1);
+    }
+
+    #[Test]
+    public function finalizeProgressiveTranscodeAsIndexedWebm(): void
+    {
+        Process::fake();
+        File::expects('ensureDirectoryExists')->with('/path/to');
+
+        (new Transcoder(transcodeTimeout: 300, ffmpegPath: '/usr/bin/ffmpeg'))->finalizeProgressiveTranscode(
+            '/tmp/capture.live.webm',
+            '/path/to/output.weba',
+        );
+
+        Process::assertRanTimes(static function (PendingProcess $process): bool {
+            return (
+                $process->command === [
+                    '/usr/bin/ffmpeg',
+                    '-hide_banner',
+                    '-loglevel',
+                    'error',
+                    '-nostdin',
+                    '-i',
+                    '/tmp/capture.live.webm',
+                    '-map',
+                    '0:a:0',
+                    '-c:a',
+                    'copy',
+                    '-f',
+                    'webm',
+                    '-y',
+                    '/path/to/output.weba',
+                ]
+            );
+        }, 1);
     }
 
     #[Test]

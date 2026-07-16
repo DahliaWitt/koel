@@ -3,6 +3,7 @@
 namespace App\Services\Transcoding;
 
 use App\Enums\SongStorageType;
+use App\Enums\TranscodeCodec;
 use App\Helpers\Ulid;
 use App\Models\Song;
 use App\Services\SongStorages\WebDAVStorage;
@@ -12,23 +13,12 @@ use Webmozart\Assert\Assert;
 
 class WebDAVTranscodingStrategy extends TranscodingStrategy
 {
-    public function getTranscodeLocation(Song $song, int $bitRate): string
+    protected function createTranscodeLocation(Song $song, int $bitRate, TranscodeCodec $codec): string
     {
-        $transcode = $this->findTranscode($song, $bitRate);
-
-        if ($transcode?->isValid()) {
-            return $transcode->location;
-        }
-
-        if ($transcode) {
-            File::delete($transcode->location);
-        }
-
         /** @var WebDAVStorage $storage */
         $storage = app(WebDAVStorage::class);
         $tmpSource = $storage->copyToLocal($song->storage_metadata->getPath());
 
-        $codec = $this->transcoder->preferredCodec();
         $destination = artifact_path(sprintf('transcodes/%d/%s.%s', $bitRate, Ulid::generate(), $codec->extension()));
 
         try {
