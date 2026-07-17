@@ -95,7 +95,9 @@ class Transcoder
             )));
 
             return Cache::remember($cacheKey, now()->addDay(), $this->hasLibopusEncoder(...));
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            Log::warning('Could not determine FFmpeg libopus support. Falling back to AAC.', ['exception' => $e]);
+
             return false;
         }
     }

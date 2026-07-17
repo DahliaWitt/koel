@@ -8,8 +8,10 @@ use App\Services\Transcoding\Transcoder;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use PHPUnit\Framework\Attributes\Test;
+use RuntimeException;
 use Tests\TestCase;
 
 class TranscoderTest extends TestCase
@@ -208,6 +210,21 @@ class TranscoderTest extends TestCase
     {
         Cache::flush();
         Process::fake(['*' => Process::result(output: "Codec 'libopus' is not recognized by FFmpeg.")]);
+
+        $transcoder = new Transcoder(ffmpegPath: PHP_BINARY);
+
+        self::assertFalse($transcoder->supports(TranscodeCodec::OPUS));
+    }
+
+    #[Test]
+    public function rejectsOpusAndLogsWhenTheProbeFails(): void
+    {
+        Cache::flush();
+        Process::fake();
+        File::expects('lastModified')->with(PHP_BINARY)->andThrow(new RuntimeException('something went wrong'));
+        Log::expects('warning')->withArgs(
+            static fn (string $message): bool => str_contains($message, 'Falling back to AAC'),
+        );
 
         $transcoder = new Transcoder(ffmpegPath: PHP_BINARY);
 
