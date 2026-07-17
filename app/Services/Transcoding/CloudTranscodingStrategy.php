@@ -45,7 +45,7 @@ class CloudTranscodingStrategy extends TranscodingStrategy
             $codec,
         );
 
-        $key = sprintf('transcodes/%s/%s.%s', $codec->cacheDirectory($bitRate), Ulid::generate(), $codec->extension());
+        $key = sprintf('transcodes/%d/%s.%s', $bitRate, Ulid::generate(), $codec->extension());
 
         try {
             $storage->uploadToStorage($key, $tmpDestination);

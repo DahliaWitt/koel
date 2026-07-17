@@ -25,12 +25,7 @@ class LocalTranscodingStrategy extends TranscodingStrategy
 
         // (Re)Transcode the song to the specified bit rate and either create a new transcode record or
         // update the existing one.
-        $destination = artifact_path(sprintf(
-            'transcodes/%s/%s.%s',
-            $codec->cacheDirectory($bitRate),
-            Ulid::generate(),
-            $codec->extension(),
-        ));
+        $destination = artifact_path(sprintf('transcodes/%d/%s.%s', $bitRate, Ulid::generate(), $codec->extension()));
         $this->transcoder->transcode($song->path, $destination, $bitRate, $codec);
 
         $this->createOrUpdateTranscode(

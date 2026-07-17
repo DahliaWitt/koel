@@ -22,9 +22,4 @@ enum TranscodeCodec: string
             self::OPUS => 'audio/webm',
         };
     }
-
-    public function cacheDirectory(int $bitRate): string
-    {
-        return $this === self::AAC ? (string) $bitRate : sprintf('%s/%d', $this->value, $bitRate);
-    }
 }

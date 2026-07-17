@@ -80,8 +80,8 @@ class CloudTranscodingStrategyTest extends TestCase
         $ulid = Ulid::freeze();
         $songPresignedUrl = 'https://s3.song.presigned.url/key.aiff';
         $tmpDestination = artifact_path("tmp/$ulid.weba", ensureDirectoryExists: false);
-        $transcodeKey = "transcodes/opus/256/$ulid.weba";
-        $transcodePresignedUrl = "https://s3.song.presigned.url/transcodes/opus/256/$ulid.weba";
+        $transcodeKey = "transcodes/256/$ulid.weba";
+        $transcodePresignedUrl = "https://s3.song.presigned.url/transcodes/256/$ulid.weba";
 
         $storage->expects('getPresignedUrl')->with('key.aiff')->andReturn($songPresignedUrl);
         $storage->expects('getPresignedUrl')->with($transcodeKey)->andReturn($transcodePresignedUrl);

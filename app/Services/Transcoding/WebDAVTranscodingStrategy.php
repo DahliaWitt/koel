@@ -29,12 +29,7 @@ class WebDAVTranscodingStrategy extends TranscodingStrategy
         $storage = app(WebDAVStorage::class);
         $tmpSource = $storage->copyToLocal($song->storage_metadata->getPath());
 
-        $destination = artifact_path(sprintf(
-            'transcodes/%s/%s.%s',
-            $codec->cacheDirectory($bitRate),
-            Ulid::generate(),
-            $codec->extension(),
-        ));
+        $destination = artifact_path(sprintf('transcodes/%d/%s.%s', $bitRate, Ulid::generate(), $codec->extension()));
 
         try {
             $this->transcodeAndUpsert($song, $tmpSource, $destination, $bitRate, $codec);

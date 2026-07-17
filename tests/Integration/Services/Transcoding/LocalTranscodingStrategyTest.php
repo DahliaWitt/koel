@@ -64,7 +64,7 @@ class LocalTranscodingStrategyTest extends TestCase
             'codec' => TranscodeCodec::AAC,
         ]);
         $ulid = Ulid::freeze();
-        $destination = artifact_path("transcodes/opus/256/$ulid.weba", ensureDirectoryExists: false);
+        $destination = artifact_path("transcodes/256/$ulid.weba", ensureDirectoryExists: false);
 
         $this->transcoder->expects('transcode')->with('/path/to/song.aiff', $destination, 256, TranscodeCodec::OPUS);
 

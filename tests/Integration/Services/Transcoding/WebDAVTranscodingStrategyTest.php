@@ -24,7 +24,7 @@ class WebDAVTranscodingStrategyTest extends TestCase
             'storage' => SongStorageType::WEBDAV,
         ]);
         $ulid = Ulid::freeze();
-        $destination = artifact_path("transcodes/opus/256/$ulid.weba", ensureDirectoryExists: false);
+        $destination = artifact_path("transcodes/256/$ulid.weba", ensureDirectoryExists: false);
 
         $storage = $this->mock(WebDAVStorage::class);
         $storage->expects('copyToLocal')->with('remote/path/to/song.aiff')->andReturn('/tmp/song.aiff');

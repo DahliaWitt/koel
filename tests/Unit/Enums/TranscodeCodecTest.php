@@ -16,11 +16,4 @@ class TranscodeCodecTest extends TestCase
         self::assertSame('weba', TranscodeCodec::OPUS->extension());
         self::assertSame('audio/webm', TranscodeCodec::OPUS->mimeType());
     }
-
-    #[Test]
-    public function preservesLegacyAacCacheDirectory(): void
-    {
-        self::assertSame('256', TranscodeCodec::AAC->cacheDirectory(256));
-        self::assertSame('opus/256', TranscodeCodec::OPUS->cacheDirectory(256));
-    }
 }
