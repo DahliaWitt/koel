@@ -16,7 +16,7 @@ class TranscodeFactory extends Factory
         return [
             'song_id' => Song::factory(),
             'bit_rate' => fake()->randomElement([128, 192, 256, 320]),
-            'codec' => TranscodeCodec::Aac,
+            'codec' => TranscodeCodec::AAC,
             'hash' => fake()->md5(),
             'location' => fake()->filePath() . '.mp4',
         ];

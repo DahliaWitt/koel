@@ -46,7 +46,7 @@ class StreamTest extends TestCase
     #[Test]
     public function maxBitRateTriggersTranscoding(): void
     {
-        config(['koel.streaming.transcode_codec' => TranscodeCodec::Opus]);
+        config(['koel.streaming.transcode_codec' => TranscodeCodec::OPUS]);
         $user = create_user();
         $song = Song::factory()->createOne([
             'path' => test_path('songs/blank.mp3'),
@@ -59,7 +59,7 @@ class StreamTest extends TestCase
             ->withArgs(
                 static fn (Song $streamedSong, RequestedStreamingConfig $config): bool => (
                     $streamedSong->is($song)
-                    && $config->codec === TranscodeCodec::Aac
+                    && $config->codec === TranscodeCodec::AAC
                 ),
             );
 

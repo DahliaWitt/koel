@@ -48,14 +48,14 @@ class CloudTranscodingStrategyTest extends TestCase
         $storage->expects('getPresignedUrl')->with($transcodeKey)->andReturn($transcodePresignedUrl);
         $storage->expects('uploadToStorage')->with($transcodeKey, $tmpDestination);
 
-        $this->transcoder->expects('transcode')->with($songPresignedUrl, $tmpDestination, 128, TranscodeCodec::Aac);
+        $this->transcoder->expects('transcode')->with($songPresignedUrl, $tmpDestination, 128, TranscodeCodec::AAC);
 
         File::expects('ensureDirectoryExists')->with(dirname($tmpDestination));
         File::expects('hash')->with($tmpDestination)->andReturn('mocked-checksum');
         File::expects('delete')->with($tmpDestination);
         File::expects('size')->with($tmpDestination)->andReturn(1_024);
 
-        $transcodedPath = $this->strategy->getTranscodeLocation($song, 128, TranscodeCodec::Aac);
+        $transcodedPath = $this->strategy->getTranscodeLocation($song, 128, TranscodeCodec::AAC);
 
         self::assertSame($transcodePresignedUrl, $transcodedPath);
 
@@ -87,14 +87,14 @@ class CloudTranscodingStrategyTest extends TestCase
         $storage->expects('getPresignedUrl')->with($transcodeKey)->andReturn($transcodePresignedUrl);
         $storage->expects('uploadToStorage')->with($transcodeKey, $tmpDestination);
 
-        $this->transcoder->expects('transcode')->with($songPresignedUrl, $tmpDestination, 256, TranscodeCodec::Opus);
+        $this->transcoder->expects('transcode')->with($songPresignedUrl, $tmpDestination, 256, TranscodeCodec::OPUS);
 
         File::expects('ensureDirectoryExists')->with(dirname($tmpDestination));
         File::expects('hash')->with($tmpDestination)->andReturn('mocked-checksum');
         File::expects('delete')->with($tmpDestination);
         File::expects('size')->with($tmpDestination)->andReturn(1_024);
 
-        $transcodedPath = $this->strategy->getTranscodeLocation($song, 256, TranscodeCodec::Opus);
+        $transcodedPath = $this->strategy->getTranscodeLocation($song, 256, TranscodeCodec::OPUS);
 
         self::assertSame($transcodePresignedUrl, $transcodedPath);
 
@@ -102,7 +102,7 @@ class CloudTranscodingStrategyTest extends TestCase
             'song_id' => $song->id,
             'location' => $transcodeKey,
             'bit_rate' => 256,
-            'codec' => TranscodeCodec::Opus->value,
+            'codec' => TranscodeCodec::OPUS->value,
             'hash' => 'mocked-checksum',
             'file_size' => 1_024,
         ]);
@@ -133,7 +133,7 @@ class CloudTranscodingStrategyTest extends TestCase
         self::assertSame('https://s3.song.presigned.url/transcodes/128/some-ulid.m4a', $this->strategy->getTranscodeLocation(
             $song,
             128,
-            TranscodeCodec::Aac,
+            TranscodeCodec::AAC,
         ));
     }
 }

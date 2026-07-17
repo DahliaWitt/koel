@@ -22,11 +22,11 @@ class TranscodeCodecResolver
     public function resolve(Song $song, bool $forceTranscode): TranscodeCodec
     {
         if ($forceTranscode || $song->isFlac()) {
-            return TranscodeCodec::Aac;
+            return TranscodeCodec::AAC;
         }
 
         if (!$this->transcoder->supports($this->configuredCodec)) {
-            return TranscodeCodec::Aac;
+            return TranscodeCodec::AAC;
         }
 
         return $this->configuredCodec;

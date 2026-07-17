@@ -37,7 +37,7 @@ class Transcoder
             $source,
             '-vn', // Strip video
             ...match ($codec) {
-                TranscodeCodec::Aac => [
+                TranscodeCodec::AAC => [
                     '-c:a',
                     'aac',
                     '-b:a',
@@ -48,7 +48,7 @@ class Transcoder
                     '-movflags',
                     '+faststart',
                 ],
-                TranscodeCodec::Opus => [
+                TranscodeCodec::OPUS => [
                     '-c:a',
                     'libopus',
                     '-b:a',
@@ -68,7 +68,7 @@ class Transcoder
 
     public function supports(TranscodeCodec $codec): bool
     {
-        if ($codec === TranscodeCodec::Aac) {
+        if ($codec === TranscodeCodec::AAC) {
             return true;
         }
 

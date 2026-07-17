@@ -37,16 +37,16 @@ class WebDAVTranscodingStrategyTest extends TestCase
         $this
             ->mock(Transcoder::class)
             ->expects('transcode')
-            ->with('/tmp/song.aiff', $destination, 256, TranscodeCodec::Opus);
+            ->with('/tmp/song.aiff', $destination, 256, TranscodeCodec::OPUS);
 
-        $transcodedPath = app(WebDAVTranscodingStrategy::class)->getTranscodeLocation($song, 256, TranscodeCodec::Opus);
+        $transcodedPath = app(WebDAVTranscodingStrategy::class)->getTranscodeLocation($song, 256, TranscodeCodec::OPUS);
 
         self::assertSame($destination, $transcodedPath);
         $this->assertDatabaseHas(Transcode::class, [
             'song_id' => $song->id,
             'location' => $destination,
             'bit_rate' => 256,
-            'codec' => TranscodeCodec::Opus->value,
+            'codec' => TranscodeCodec::OPUS->value,
             'hash' => 'mocked-checksum',
             'file_size' => 1_024,
         ]);

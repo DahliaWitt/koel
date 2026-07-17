@@ -4,27 +4,27 @@ namespace App\Enums;
 
 enum TranscodeCodec: string
 {
-    case Aac = 'aac';
-    case Opus = 'opus';
+    case AAC = 'aac';
+    case OPUS = 'opus';
 
     public function extension(): string
     {
         return match ($this) {
-            self::Aac => 'm4a',
-            self::Opus => 'weba',
+            self::AAC => 'm4a',
+            self::OPUS => 'weba',
         };
     }
 
     public function mimeType(): string
     {
         return match ($this) {
-            self::Aac => 'audio/mp4',
-            self::Opus => 'audio/webm',
+            self::AAC => 'audio/mp4',
+            self::OPUS => 'audio/webm',
         };
     }
 
     public function cacheDirectory(int $bitRate): string
     {
-        return $this === self::Aac ? (string) $bitRate : sprintf('%s/%d', $this->value, $bitRate);
+        return $this === self::AAC ? (string) $bitRate : sprintf('%s/%d', $this->value, $bitRate);
     }
 }

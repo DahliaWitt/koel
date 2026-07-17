@@ -28,7 +28,7 @@ class TranscoderTest extends TestCase
         File::expects('ensureDirectoryExists')->with('/path/to');
 
         $transcoder = new Transcoder(transcodeTimeout: 300, ffmpegPath: '/usr/bin/ffmpeg');
-        $transcoder->transcode('/path/to/song.flac', '/path/to/output.m4a', 128, TranscodeCodec::Aac);
+        $transcoder->transcode('/path/to/song.flac', '/path/to/output.m4a', 128, TranscodeCodec::AAC);
 
         $closure = static function (PendingProcess $process): bool {
             return (
@@ -64,7 +64,7 @@ class TranscoderTest extends TestCase
         File::expects('ensureDirectoryExists')->with('/path/to');
 
         $transcoder = new Transcoder(transcodeTimeout: 300, ffmpegPath: '/usr/bin/ffmpeg', aacFast: false);
-        $transcoder->transcode('/path/to/song.aiff', '/path/to/output.m4a', 320, TranscodeCodec::Aac);
+        $transcoder->transcode('/path/to/song.aiff', '/path/to/output.m4a', 320, TranscodeCodec::AAC);
 
         Process::assertRanTimes(static function (PendingProcess $process): bool {
             return (
@@ -96,7 +96,7 @@ class TranscoderTest extends TestCase
         File::expects('ensureDirectoryExists')->with('/path/to');
 
         $transcoder = new Transcoder(transcodeTimeout: 300, ffmpegPath: '/usr/bin/ffmpeg');
-        $transcoder->transcode('/path/to/song.aiff', '/path/to/output.weba', 256, TranscodeCodec::Opus);
+        $transcoder->transcode('/path/to/song.aiff', '/path/to/output.weba', 256, TranscodeCodec::OPUS);
 
         Process::assertRanTimes(static function (PendingProcess $process): bool {
             return (
@@ -132,7 +132,7 @@ class TranscoderTest extends TestCase
         $this->expectExceptionMessage('something went wrong');
 
         $transcoder = new Transcoder(transcodeTimeout: 300, ffmpegPath: '/usr/bin/ffmpeg');
-        $transcoder->transcode('/path/to/song.flac', '/path/to/output.m4a', 128, TranscodeCodec::Aac);
+        $transcoder->transcode('/path/to/song.flac', '/path/to/output.m4a', 128, TranscodeCodec::AAC);
     }
 
     #[Test]
@@ -142,7 +142,7 @@ class TranscoderTest extends TestCase
         File::expects('ensureDirectoryExists')->with('/path/to');
 
         $transcoder = new Transcoder(transcodeTimeout: 600, ffmpegPath: '/usr/bin/ffmpeg');
-        $transcoder->transcode('/path/to/song.flac', '/path/to/output.m4a', 128, TranscodeCodec::Aac);
+        $transcoder->transcode('/path/to/song.flac', '/path/to/output.m4a', 128, TranscodeCodec::AAC);
 
         Process::assertRanTimes(static function (PendingProcess $process): bool {
             return $process->timeout === 600;
@@ -156,7 +156,7 @@ class TranscoderTest extends TestCase
         File::expects('ensureDirectoryExists')->with('/path/to');
 
         $transcoder = new Transcoder(transcodeTimeout: 0, ffmpegPath: '/usr/bin/ffmpeg');
-        $transcoder->transcode('/path/to/song.flac', '/path/to/output.m4a', 128, TranscodeCodec::Aac);
+        $transcoder->transcode('/path/to/song.flac', '/path/to/output.m4a', 128, TranscodeCodec::AAC);
 
         Process::assertRanTimes(static function (PendingProcess $process): bool {
             return $process->timeout === null;
@@ -170,7 +170,7 @@ class TranscoderTest extends TestCase
 
         $transcoder = new Transcoder(ffmpegPath: '/usr/bin/ffmpeg');
 
-        self::assertTrue($transcoder->supports(TranscodeCodec::Aac));
+        self::assertTrue($transcoder->supports(TranscodeCodec::AAC));
 
         Process::assertNothingRan();
     }
@@ -183,8 +183,8 @@ class TranscoderTest extends TestCase
 
         $transcoder = new Transcoder(ffmpegPath: PHP_BINARY);
 
-        self::assertTrue($transcoder->supports(TranscodeCodec::Opus));
-        self::assertTrue($transcoder->supports(TranscodeCodec::Opus));
+        self::assertTrue($transcoder->supports(TranscodeCodec::OPUS));
+        self::assertTrue($transcoder->supports(TranscodeCodec::OPUS));
 
         Process::assertRanTimes(static function (PendingProcess $process): bool {
             return in_array('encoder=libopus', $process->command, true);
@@ -198,7 +198,7 @@ class TranscoderTest extends TestCase
 
         $transcoder = new Transcoder(ffmpegPath: '/nonexistent/ffmpeg');
 
-        self::assertFalse($transcoder->supports(TranscodeCodec::Opus));
+        self::assertFalse($transcoder->supports(TranscodeCodec::OPUS));
 
         Process::assertNothingRan();
     }
@@ -211,6 +211,6 @@ class TranscoderTest extends TestCase
 
         $transcoder = new Transcoder(ffmpegPath: PHP_BINARY);
 
-        self::assertFalse($transcoder->supports(TranscodeCodec::Opus));
+        self::assertFalse($transcoder->supports(TranscodeCodec::OPUS));
     }
 }

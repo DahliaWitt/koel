@@ -45,12 +45,12 @@ class SfpTranscodingStrategyTest extends TestCase
         File::expects('ensureDirectoryExists')->with(dirname($destination));
         File::expects('size')->with($destination)->andReturn(1_024);
 
-        $this->transcoder->expects('transcode')->with('/tmp/song.flac', $destination, 128, TranscodeCodec::Aac);
+        $this->transcoder->expects('transcode')->with('/tmp/song.flac', $destination, 128, TranscodeCodec::AAC);
 
         File::expects('hash')->with($destination)->andReturn('mocked-checksum');
         File::expects('delete')->with('/tmp/song.flac');
 
-        $this->strategy->getTranscodeLocation($song, 128, TranscodeCodec::Aac);
+        $this->strategy->getTranscodeLocation($song, 128, TranscodeCodec::AAC);
 
         $this->assertDatabaseHas(Transcode::class, [
             'song_id' => $song->id,
@@ -78,7 +78,7 @@ class SfpTranscodingStrategyTest extends TestCase
         $transcodedPath = $this->strategy->getTranscodeLocation(
             $transcode->song,
             $transcode->bit_rate,
-            TranscodeCodec::Aac,
+            TranscodeCodec::AAC,
         );
 
         self::assertSame($transcode->location, $transcodedPath);
@@ -109,13 +109,13 @@ class SfpTranscodingStrategyTest extends TestCase
 
         File::expects('ensureDirectoryExists')->with(dirname($destination));
 
-        $this->transcoder->expects('transcode')->with('/tmp/song.flac', $destination, 128, TranscodeCodec::Aac);
+        $this->transcoder->expects('transcode')->with('/tmp/song.flac', $destination, 128, TranscodeCodec::AAC);
 
         File::expects('hash')->with($destination)->andReturn('mocked-checksum');
         File::expects('size')->with($destination)->andReturn(1_024);
         File::expects('delete')->with('/tmp/song.flac');
 
-        $this->strategy->getTranscodeLocation($song, 128, TranscodeCodec::Aac);
+        $this->strategy->getTranscodeLocation($song, 128, TranscodeCodec::AAC);
         self::assertSame($destination, $transcode->refresh()->location);
     }
 }

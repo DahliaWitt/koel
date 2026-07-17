@@ -53,7 +53,7 @@ class SongPlayTest extends TestCase
     public function transcoding(): void
     {
         config([
-            'koel.streaming.transcode_codec' => TranscodeCodec::Opus,
+            'koel.streaming.transcode_codec' => TranscodeCodec::OPUS,
             'koel.streaming.transcode_flac' => true,
         ]);
         $user = create_user();
@@ -71,7 +71,7 @@ class SongPlayTest extends TestCase
             ->withArgs(
                 static fn (Song $streamedSong, RequestedStreamingConfig $config): bool => (
                     $streamedSong->is($song)
-                    && $config->codec === TranscodeCodec::Aac
+                    && $config->codec === TranscodeCodec::AAC
                 ),
             );
 
@@ -83,7 +83,7 @@ class SongPlayTest extends TestCase
     #[Test]
     public function forceTranscoding(): void
     {
-        config(['koel.streaming.transcode_codec' => TranscodeCodec::Opus]);
+        config(['koel.streaming.transcode_codec' => TranscodeCodec::OPUS]);
         $user = create_user();
 
         /** @var CompositeToken $token */
@@ -96,7 +96,7 @@ class SongPlayTest extends TestCase
             ->withArgs(
                 static fn (Song $streamedSong, RequestedStreamingConfig $config): bool => (
                     $streamedSong->is($song)
-                    && $config->codec === TranscodeCodec::Aac
+                    && $config->codec === TranscodeCodec::AAC
                 ),
             );
 
@@ -106,8 +106,8 @@ class SongPlayTest extends TestCase
     #[Test]
     public function usesConfiguredCodecForAutomaticCompatibilityTranscoding(): void
     {
-        config(['koel.streaming.transcode_codec' => TranscodeCodec::Opus]);
-        $this->mock(Transcoder::class)->expects('supports')->with(TranscodeCodec::Opus)->andReturnTrue();
+        config(['koel.streaming.transcode_codec' => TranscodeCodec::OPUS]);
+        $this->mock(Transcoder::class)->expects('supports')->with(TranscodeCodec::OPUS)->andReturnTrue();
         $user = create_user();
 
         /** @var CompositeToken $token */
@@ -123,7 +123,7 @@ class SongPlayTest extends TestCase
             ->withArgs(
                 static fn (Song $streamedSong, RequestedStreamingConfig $config): bool => (
                     $streamedSong->is($song)
-                    && $config->codec === TranscodeCodec::Opus
+                    && $config->codec === TranscodeCodec::OPUS
                 ),
             );
 
@@ -133,8 +133,8 @@ class SongPlayTest extends TestCase
     #[Test]
     public function fallsBackToAacWhenOpusIsUnavailable(): void
     {
-        config(['koel.streaming.transcode_codec' => TranscodeCodec::Opus]);
-        $this->mock(Transcoder::class)->expects('supports')->with(TranscodeCodec::Opus)->andReturnFalse();
+        config(['koel.streaming.transcode_codec' => TranscodeCodec::OPUS]);
+        $this->mock(Transcoder::class)->expects('supports')->with(TranscodeCodec::OPUS)->andReturnFalse();
         $user = create_user();
 
         /** @var CompositeToken $token */
@@ -150,7 +150,7 @@ class SongPlayTest extends TestCase
             ->withArgs(
                 static fn (Song $streamedSong, RequestedStreamingConfig $config): bool => (
                     $streamedSong->is($song)
-                    && $config->codec === TranscodeCodec::Aac
+                    && $config->codec === TranscodeCodec::AAC
                 ),
             );
 

@@ -17,7 +17,7 @@ final readonly class RequestedStreamingConfig
         bool $transcode = false,
         ?int $bitRate = 128,
         float $startTime = 0.0,
-        TranscodeCodec $codec = TranscodeCodec::Aac,
+        TranscodeCodec $codec = TranscodeCodec::AAC,
     ): self {
         return new self($transcode, $bitRate, $startTime, $codec);
     }

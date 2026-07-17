@@ -100,7 +100,7 @@ class StreamerTest extends TestCase
         $this
             ->mock(LocalTranscodingStrategy::class)
             ->expects('getTranscodeLocation')
-            ->with($song, 128, TranscodeCodec::Aac)
+            ->with($song, 128, TranscodeCodec::AAC)
             ->andReturn('https://example.com/transcode.m4a');
 
         $response = (new Streamer($song, config: RequestedStreamingConfig::make()))->stream();
@@ -143,12 +143,12 @@ class StreamerTest extends TestCase
         $this
             ->mock(LocalTranscodingStrategy::class)
             ->expects('getTranscodeLocation')
-            ->with($song, 256, TranscodeCodec::Opus)
+            ->with($song, 256, TranscodeCodec::OPUS)
             ->andReturn('https://example.com/transcode.weba');
 
         $response = (new Streamer($song, config: RequestedStreamingConfig::make(
             bitRate: 256,
-            codec: TranscodeCodec::Opus,
+            codec: TranscodeCodec::OPUS,
         )))->stream();
 
         self::assertTrue($response->isRedirect('https://example.com/transcode.weba'));
@@ -169,7 +169,7 @@ class StreamerTest extends TestCase
         $this
             ->mock(LocalTranscodingStrategy::class)
             ->expects('getTranscodeLocation')
-            ->with($song, 64, TranscodeCodec::Aac)
+            ->with($song, 64, TranscodeCodec::AAC)
             ->andReturn('https://example.com/transcode.m4a');
 
         $response = (new Streamer($song, config: RequestedStreamingConfig::make(
