@@ -15,7 +15,7 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-class SfpTranscodingStrategyTest extends TestCase
+class SftpTranscodingStrategyTest extends TestCase
 {
     private MockInterface|Transcoder $transcoder;
     private SftpTranscodingStrategy $strategy;

@@ -21,6 +21,7 @@ class TranscodeCodecTest extends TestCase
     public function resolvesFromExtension(): void
     {
         self::assertSame(TranscodeCodec::OPUS, TranscodeCodec::fromExtension('weba'));
+        self::assertSame(TranscodeCodec::OPUS, TranscodeCodec::fromExtension('WEBA'));
         self::assertSame(TranscodeCodec::AAC, TranscodeCodec::fromExtension('m4a'));
         self::assertSame(TranscodeCodec::AAC, TranscodeCodec::fromExtension('mp4'));
     }
