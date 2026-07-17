@@ -28,7 +28,7 @@ class TranscodingStreamerAdapter implements StreamerAdapter
             'ffmpeg not found or not executable.',
         );
 
-        $codec = $config->codec ?? TranscodeCodec::AAC;
+        $codec = $config->codec ?? TranscodeCodec::default();
         $bitRate = $config?->bitRate ?: $this->defaultBitRate;
 
         $transcodePath = TranscodeStrategyFactory::make($song->storage)->getTranscodeLocation($song, $bitRate, $codec);

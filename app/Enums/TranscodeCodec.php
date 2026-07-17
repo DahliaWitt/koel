@@ -7,6 +7,11 @@ enum TranscodeCodec: string
     case AAC = 'aac';
     case OPUS = 'opus';
 
+    public static function default(): self
+    {
+        return self::AAC;
+    }
+
     public function extension(): string
     {
         return match ($this) {

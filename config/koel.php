@@ -42,7 +42,7 @@ return [
     'streaming' => [
         'bitrate' => env('TRANSCODE_BIT_RATE') ?: env('OUTPUT_BIT_RATE', 128),
         'aac_fast' => env('TRANSCODE_AAC_FAST', true),
-        'transcode_codec' => TranscodeCodec::tryFrom((string) env('TRANSCODE_CODEC', 'aac')) ?? TranscodeCodec::AAC,
+        'transcode_codec' => TranscodeCodec::tryFrom((string) env('TRANSCODE_CODEC')) ?? TranscodeCodec::default(),
         'method' => env('STREAMING_METHOD'),
         'ffmpeg_path' => env('FFMPEG_PATH') ?: find_ffmpeg_path(),
         'transcode_flac' => env('TRANSCODE_FLAC', true),
