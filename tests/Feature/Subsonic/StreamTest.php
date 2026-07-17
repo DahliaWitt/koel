@@ -46,7 +46,7 @@ class StreamTest extends TestCase
     #[Test]
     public function maxBitRateTriggersTranscoding(): void
     {
-        config(['koel.streaming.transcode_compatibility_codec' => TranscodeCodec::Opus]);
+        config(['koel.streaming.transcode_codec' => TranscodeCodec::Opus]);
         $user = create_user();
         $song = Song::factory()->createOne([
             'path' => test_path('songs/blank.mp3'),

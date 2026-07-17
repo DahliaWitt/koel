@@ -48,7 +48,7 @@ files for later use. You should also expect a slight delay when you first play a
 Koel will need to do its transcoding magic first (which can involve downloading the file from your cloud storage if
 necessary).
 
-By default, Koel converts formats that browsers cannot play to AAC. Set `TRANSCODE_COMPATIBILITY_CODEC=opus` to use
+By default, Koel converts formats that browsers cannot play to AAC. Set `TRANSCODE_CODEC=opus` to use
 Opus in a WebM container instead. This setting only applies when Koel automatically converts an incompatible format
 for browser playback. Forced, FLAC-policy, embed, and Subsonic transcodes continue to use AAC. Opus uses the same
 `TRANSCODE_BIT_RATE` setting; `256` is a good value for high-quality Opus playback. If FFmpeg on your server lacks

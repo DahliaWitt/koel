@@ -9,8 +9,8 @@ use Illuminate\Container\Attributes\Config;
 class TranscodeCodecResolver
 {
     public function __construct(
-        #[Config('koel.streaming.transcode_compatibility_codec')]
-        private readonly TranscodeCodec $compatibilityCodec,
+        #[Config('koel.streaming.transcode_codec')]
+        private readonly TranscodeCodec $configuredCodec,
         private readonly Transcoder $transcoder,
     ) {}
 
@@ -25,10 +25,10 @@ class TranscodeCodecResolver
             return TranscodeCodec::Aac;
         }
 
-        if (!$this->transcoder->supports($this->compatibilityCodec)) {
+        if (!$this->transcoder->supports($this->configuredCodec)) {
             return TranscodeCodec::Aac;
         }
 
-        return $this->compatibilityCodec;
+        return $this->configuredCodec;
     }
 }
