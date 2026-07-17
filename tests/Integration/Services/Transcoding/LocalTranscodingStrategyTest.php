@@ -35,13 +35,14 @@ class LocalTranscodingStrategyTest extends TestCase
 
         $destination = artifact_path("transcodes/128/$ulid.m4a", ensureDirectoryExists: false);
 
+        $this->transcoder->expects('preferredCodec')->andReturn(TranscodeCodec::AAC);
         $this->transcoder->expects('transcode')->with('/path/to/song.flac', $destination, 128, TranscodeCodec::AAC);
 
         File::expects('hash')->with($destination)->andReturn('mocked-checksum');
         File::expects('ensureDirectoryExists')->with(dirname($destination));
         File::expects('size')->with($destination)->andReturn(1_024);
 
-        $transcodedPath = $this->strategy->getTranscodeLocation($song, 128, TranscodeCodec::AAC);
+        $transcodedPath = $this->strategy->getTranscodeLocation($song, 128);
 
         $this->assertDatabaseHas(Transcode::class, [
             'song_id' => $song->id,
@@ -55,24 +56,20 @@ class LocalTranscodingStrategyTest extends TestCase
     }
 
     #[Test]
-    public function getOpusTranscodedLocationWithoutReplacingAac(): void
+    public function createNewTranscodeWithPreferredCodec(): void
     {
         $song = Song::factory()->createOne(['path' => '/path/to/song.aiff']);
-        Transcode::factory()->for($song)->createOne([
-            'location' => '/path/to/old-transcode.m4a',
-            'bit_rate' => 256,
-            'codec' => TranscodeCodec::AAC,
-        ]);
         $ulid = Ulid::freeze();
         $destination = artifact_path("transcodes/256/$ulid.weba", ensureDirectoryExists: false);
 
+        $this->transcoder->expects('preferredCodec')->andReturn(TranscodeCodec::OPUS);
         $this->transcoder->expects('transcode')->with('/path/to/song.aiff', $destination, 256, TranscodeCodec::OPUS);
 
         File::expects('hash')->with($destination)->andReturn('mocked-checksum');
         File::expects('ensureDirectoryExists')->with(dirname($destination));
         File::expects('size')->with($destination)->andReturn(1_024);
 
-        $transcodedPath = $this->strategy->getTranscodeLocation($song, 256, TranscodeCodec::OPUS);
+        $transcodedPath = $this->strategy->getTranscodeLocation($song, 256);
 
         $this->assertDatabaseHas(Transcode::class, [
             'song_id' => $song->id,
@@ -84,6 +81,28 @@ class LocalTranscodingStrategyTest extends TestCase
         ]);
 
         self::assertSame($destination, $transcodedPath);
+    }
+
+    #[Test]
+    public function reuseExistingTranscodeRegardlessOfConfiguredCodec(): void
+    {
+        $this->transcoder->expects('preferredCodec')->never();
+        $this->transcoder->expects('transcode')->never();
+
+        $song = Song::factory()->createOne(['path' => '/path/to/song.aiff']);
+        $transcode = Transcode::factory()->for($song)->createOne([
+            'location' => '/path/to/transcode.m4a',
+            'bit_rate' => 256,
+            'codec' => TranscodeCodec::AAC,
+            'hash' => 'mocked-checksum',
+        ]);
+
+        File::expects('isReadable')->with('/path/to/transcode.m4a')->andReturn(true);
+        File::expects('hash')->with('/path/to/transcode.m4a')->andReturn('mocked-checksum');
+
+        $transcodedPath = $this->strategy->getTranscodeLocation($song, 256);
+
+        self::assertSame($transcode->location, $transcodedPath);
     }
 
     #[Test]
@@ -100,11 +119,7 @@ class LocalTranscodingStrategyTest extends TestCase
 
         File::expects('hash')->with('/path/to/transcode.m4a')->andReturn('mocked-checksum');
 
-        $transcodedPath = $this->strategy->getTranscodeLocation(
-            $transcode->song,
-            $transcode->bit_rate,
-            TranscodeCodec::AAC,
-        );
+        $transcodedPath = $this->strategy->getTranscodeLocation($transcode->song, $transcode->bit_rate);
 
         self::assertSame($transcode->location, $transcodedPath);
     }
@@ -123,7 +138,7 @@ class LocalTranscodingStrategyTest extends TestCase
         File::expects('isReadable')->with('/path/to/transcode.weba')->andReturn(true);
         File::expects('hash')->with('/path/to/transcode.weba')->andReturn('mocked-checksum');
 
-        $transcodedPath = $this->strategy->getTranscodeLocation($transcode->song, 256, TranscodeCodec::OPUS);
+        $transcodedPath = $this->strategy->getTranscodeLocation($transcode->song, 256);
 
         self::assertSame($transcode->location, $transcodedPath);
     }
@@ -148,9 +163,10 @@ class LocalTranscodingStrategyTest extends TestCase
         File::expects('ensureDirectoryExists')->with(dirname($destination));
         File::expects('size')->with($destination)->andReturn(1_024);
 
+        $this->transcoder->expects('preferredCodec')->andReturn(TranscodeCodec::AAC);
         $this->transcoder->expects('transcode')->with('/path/to/song.flac', $destination, 128, TranscodeCodec::AAC);
 
-        $transcodedLocation = $this->strategy->getTranscodeLocation($song, 128, TranscodeCodec::AAC);
+        $transcodedLocation = $this->strategy->getTranscodeLocation($song, 128);
 
         self::assertSame($destination, $transcodedLocation);
         self::assertSame($transcode->refresh()->location, $transcodedLocation);

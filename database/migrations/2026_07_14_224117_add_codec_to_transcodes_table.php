@@ -9,8 +9,6 @@ return new class extends Migration {
     {
         Schema::table('transcodes', static function (Blueprint $table): void {
             $table->string('codec', 16)->default('aac')->after('bit_rate');
-            $table->dropUnique(['song_id', 'bit_rate']);
-            $table->unique(['song_id', 'bit_rate', 'codec']);
         });
     }
 };

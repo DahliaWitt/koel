@@ -12,6 +12,14 @@ enum TranscodeCodec: string
         return self::AAC;
     }
 
+    public static function fromExtension(string $extension): self
+    {
+        return match (strtolower($extension)) {
+            'weba' => self::OPUS,
+            default => self::AAC,
+        };
+    }
+
     public function extension(): string
     {
         return match ($this) {

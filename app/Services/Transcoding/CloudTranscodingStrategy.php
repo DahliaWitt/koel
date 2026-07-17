@@ -3,7 +3,6 @@
 namespace App\Services\Transcoding;
 
 use App\Enums\SongStorageType;
-use App\Enums\TranscodeCodec;
 use App\Helpers\Ulid;
 use App\Models\Song;
 use App\Models\Transcode;
@@ -13,16 +12,11 @@ use Illuminate\Support\Facades\File;
 
 class CloudTranscodingStrategy extends TranscodingStrategy
 {
-    public function getTranscodeLocation(Song $song, int $bitRate, TranscodeCodec $codec): string
+    public function getTranscodeLocation(Song $song, int $bitRate): string
     {
         $storage = CloudStorageFactory::make($song->storage);
 
-        $transcode = $this->findTranscode($song, $bitRate, $codec) ?? $this->createTranscode(
-            $storage,
-            $song,
-            $bitRate,
-            $codec,
-        );
+        $transcode = $this->findTranscode($song, $bitRate) ?? $this->createTranscode($storage, $song, $bitRate);
 
         return $storage->getPresignedUrl($transcode->location);
     }
@@ -34,8 +28,9 @@ class CloudTranscodingStrategy extends TranscodingStrategy
      * 3. Store the transcode record in the database.
      * 4. Delete the temporary file.
      */
-    private function createTranscode(CloudStorage $storage, Song $song, int $bitRate, TranscodeCodec $codec): Transcode
+    private function createTranscode(CloudStorage $storage, Song $song, int $bitRate): Transcode
     {
+        $codec = $this->transcoder->preferredCodec();
         $tmpDestination = artifact_path(sprintf('tmp/%s.%s', Ulid::generate(), $codec->extension()));
 
         $this->transcoder->transcode(

@@ -16,4 +16,12 @@ class TranscodeCodecTest extends TestCase
         self::assertSame('weba', TranscodeCodec::OPUS->extension());
         self::assertSame('audio/webm', TranscodeCodec::OPUS->mimeType());
     }
+
+    #[Test]
+    public function resolvesFromExtension(): void
+    {
+        self::assertSame(TranscodeCodec::OPUS, TranscodeCodec::fromExtension('weba'));
+        self::assertSame(TranscodeCodec::AAC, TranscodeCodec::fromExtension('m4a'));
+        self::assertSame(TranscodeCodec::AAC, TranscodeCodec::fromExtension('mp4'));
+    }
 }

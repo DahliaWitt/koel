@@ -213,4 +213,26 @@ class TranscoderTest extends TestCase
 
         self::assertFalse($transcoder->supports(TranscodeCodec::OPUS));
     }
+
+    #[Test]
+    public function prefersConfiguredCodecWhenSupported(): void
+    {
+        Cache::flush();
+        Process::fake(['*' => Process::result(output: 'Encoder libopus [libopus Opus]:')]);
+
+        $transcoder = new Transcoder(ffmpegPath: PHP_BINARY, configuredCodec: TranscodeCodec::OPUS);
+
+        self::assertSame(TranscodeCodec::OPUS, $transcoder->preferredCodec());
+    }
+
+    #[Test]
+    public function fallsBackToDefaultCodecWhenConfiguredCodecIsUnsupported(): void
+    {
+        Cache::flush();
+        Process::fake(['*' => Process::result(output: "Codec 'libopus' is not recognized by FFmpeg.")]);
+
+        $transcoder = new Transcoder(ffmpegPath: PHP_BINARY, configuredCodec: TranscodeCodec::OPUS);
+
+        self::assertSame(TranscodeCodec::AAC, $transcoder->preferredCodec());
+    }
 }

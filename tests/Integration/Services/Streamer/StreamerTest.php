@@ -3,7 +3,6 @@
 namespace Tests\Integration\Services\Streamer;
 
 use App\Enums\SongStorageType;
-use App\Enums\TranscodeCodec;
 use App\Exceptions\KoelPlusRequiredException;
 use App\Models\Song;
 use App\Services\Streamer\Adapters\LocalStreamerAdapter;
@@ -84,7 +83,7 @@ class StreamerTest extends TestCase
     }
 
     #[Test]
-    public function useRequestedAacWhenTranscodingFlac(): void
+    public function transcodeFlacWhenConfigured(): void
     {
         config([
             'koel.streaming.bitrate' => 128,
@@ -100,7 +99,7 @@ class StreamerTest extends TestCase
         $this
             ->mock(LocalTranscodingStrategy::class)
             ->expects('getTranscodeLocation')
-            ->with($song, 128, TranscodeCodec::AAC)
+            ->with($song, 128)
             ->andReturn('https://example.com/transcode.m4a');
 
         $response = (new Streamer($song, config: RequestedStreamingConfig::make()))->stream();
@@ -127,35 +126,7 @@ class StreamerTest extends TestCase
     }
 
     #[Test]
-    public function useRequestedCodecForCompatibilityTranscoding(): void
-    {
-        config([
-            'koel.streaming.bitrate' => 256,
-            'koel.streaming.ffmpeg_path' => PHP_BINARY,
-            'koel.streaming.transcode_required_mime_types' => ['audio/aiff'],
-        ]);
-        $song = Song::factory()->createOne([
-            'storage' => SongStorageType::LOCAL,
-            'path' => '/tmp/test.aiff',
-            'mime_type' => 'audio/aiff',
-        ]);
-
-        $this
-            ->mock(LocalTranscodingStrategy::class)
-            ->expects('getTranscodeLocation')
-            ->with($song, 256, TranscodeCodec::OPUS)
-            ->andReturn('https://example.com/transcode.weba');
-
-        $response = (new Streamer($song, config: RequestedStreamingConfig::make(
-            bitRate: 256,
-            codec: TranscodeCodec::OPUS,
-        )))->stream();
-
-        self::assertTrue($response->isRedirect('https://example.com/transcode.weba'));
-    }
-
-    #[Test]
-    public function useAacForForcedTranscoding(): void
+    public function passRequestedBitRateForForcedTranscoding(): void
     {
         config([
             'koel.streaming.ffmpeg_path' => PHP_BINARY,
@@ -169,7 +140,7 @@ class StreamerTest extends TestCase
         $this
             ->mock(LocalTranscodingStrategy::class)
             ->expects('getTranscodeLocation')
-            ->with($song, 64, TranscodeCodec::AAC)
+            ->with($song, 64)
             ->andReturn('https://example.com/transcode.m4a');
 
         $response = (new Streamer($song, config: RequestedStreamingConfig::make(

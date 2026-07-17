@@ -20,7 +20,18 @@ class Transcoder
         private readonly string $ffmpegPath = '',
         #[Config('koel.streaming.aac_fast')]
         private readonly bool $aacFast = true,
+        #[Config('koel.streaming.transcode_codec')]
+        private readonly TranscodeCodec $configuredCodec = TranscodeCodec::AAC,
     ) {}
+
+    /**
+     * The codec to use for new transcodes: the configured one, or the default codec
+     * if FFmpeg lacks support for the configured one.
+     */
+    public function preferredCodec(): TranscodeCodec
+    {
+        return $this->supports($this->configuredCodec) ? $this->configuredCodec : TranscodeCodec::default();
+    }
 
     public function transcode(string $source, string $destination, int $bitRate, TranscodeCodec $codec): void
     {

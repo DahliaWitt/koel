@@ -2,14 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Enums\TranscodeCodec;
 use App\Models\Song;
 use App\Services\Auth\TokenManager;
 use App\Services\Streamer\Adapters\LocalStreamerAdapter;
 use App\Services\Streamer\Adapters\TranscodingStreamerAdapter;
-use App\Services\Transcoding\Transcoder;
 use App\Values\CompositeToken;
-use App\Values\RequestedStreamingConfig;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -52,10 +49,7 @@ class SongPlayTest extends TestCase
     #[Test]
     public function transcoding(): void
     {
-        config([
-            'koel.streaming.transcode_codec' => TranscodeCodec::OPUS,
-            'koel.streaming.transcode_flac' => true,
-        ]);
+        config(['koel.streaming.transcode_flac' => true]);
         $user = create_user();
 
         /** @var CompositeToken $token */
@@ -65,15 +59,7 @@ class SongPlayTest extends TestCase
             'mime_type' => 'audio/flac',
         ]);
 
-        $this
-            ->mock(TranscodingStreamerAdapter::class)
-            ->expects('stream')
-            ->withArgs(
-                static fn (Song $streamedSong, RequestedStreamingConfig $config): bool => (
-                    $streamedSong->is($song)
-                    && $config->codec === TranscodeCodec::AAC
-                ),
-            );
+        $this->mock(TranscodingStreamerAdapter::class)->expects('stream');
 
         $this->get("play/{$song->id}?t=$token->audioToken")->assertOk();
 
@@ -83,77 +69,14 @@ class SongPlayTest extends TestCase
     #[Test]
     public function forceTranscoding(): void
     {
-        config(['koel.streaming.transcode_codec' => TranscodeCodec::OPUS]);
         $user = create_user();
 
         /** @var CompositeToken $token */
         $token = app(TokenManager::class)->createCompositeToken($user);
         $song = Song::factory()->createOne(['path' => '/var/songs/blank.mp3']);
 
-        $this
-            ->mock(TranscodingStreamerAdapter::class)
-            ->expects('stream')
-            ->withArgs(
-                static fn (Song $streamedSong, RequestedStreamingConfig $config): bool => (
-                    $streamedSong->is($song)
-                    && $config->codec === TranscodeCodec::AAC
-                ),
-            );
+        $this->mock(TranscodingStreamerAdapter::class)->expects('stream');
 
         $this->get("play/{$song->id}/1?t=$token->audioToken")->assertOk();
-    }
-
-    #[Test]
-    public function usesConfiguredCodecForAutomaticCompatibilityTranscoding(): void
-    {
-        config(['koel.streaming.transcode_codec' => TranscodeCodec::OPUS]);
-        $this->mock(Transcoder::class)->expects('supports')->with(TranscodeCodec::OPUS)->andReturnTrue();
-        $user = create_user();
-
-        /** @var CompositeToken $token */
-        $token = app(TokenManager::class)->createCompositeToken($user);
-        $song = Song::factory()->createOne([
-            'path' => '/var/songs/blank.aiff',
-            'mime_type' => 'audio/aiff',
-        ]);
-
-        $this
-            ->mock(TranscodingStreamerAdapter::class)
-            ->expects('stream')
-            ->withArgs(
-                static fn (Song $streamedSong, RequestedStreamingConfig $config): bool => (
-                    $streamedSong->is($song)
-                    && $config->codec === TranscodeCodec::OPUS
-                ),
-            );
-
-        $this->get("play/{$song->id}?t=$token->audioToken")->assertOk();
-    }
-
-    #[Test]
-    public function fallsBackToAacWhenOpusIsUnavailable(): void
-    {
-        config(['koel.streaming.transcode_codec' => TranscodeCodec::OPUS]);
-        $this->mock(Transcoder::class)->expects('supports')->with(TranscodeCodec::OPUS)->andReturnFalse();
-        $user = create_user();
-
-        /** @var CompositeToken $token */
-        $token = app(TokenManager::class)->createCompositeToken($user);
-        $song = Song::factory()->createOne([
-            'path' => '/var/songs/blank.aiff',
-            'mime_type' => 'audio/aiff',
-        ]);
-
-        $this
-            ->mock(TranscodingStreamerAdapter::class)
-            ->expects('stream')
-            ->withArgs(
-                static fn (Song $streamedSong, RequestedStreamingConfig $config): bool => (
-                    $streamedSong->is($song)
-                    && $config->codec === TranscodeCodec::AAC
-                ),
-            );
-
-        $this->get("play/{$song->id}?t=$token->audioToken")->assertOk();
     }
 }

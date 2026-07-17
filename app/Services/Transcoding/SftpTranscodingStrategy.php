@@ -3,7 +3,6 @@
 namespace App\Services\Transcoding;
 
 use App\Enums\SongStorageType;
-use App\Enums\TranscodeCodec;
 use App\Helpers\Ulid;
 use App\Models\Song;
 use App\Services\SongStorages\SftpStorage;
@@ -13,9 +12,9 @@ use Webmozart\Assert\Assert;
 
 class SftpTranscodingStrategy extends TranscodingStrategy
 {
-    public function getTranscodeLocation(Song $song, int $bitRate, TranscodeCodec $codec): string
+    public function getTranscodeLocation(Song $song, int $bitRate): string
     {
-        $transcode = $this->findTranscode($song, $bitRate, $codec);
+        $transcode = $this->findTranscode($song, $bitRate);
 
         if ($transcode?->isValid()) {
             return $transcode->location;
@@ -30,6 +29,7 @@ class SftpTranscodingStrategy extends TranscodingStrategy
         $storage = app(SftpStorage::class);
         $tmpSource = $storage->copyToLocal($song->storage_metadata->getPath());
 
+        $codec = $this->transcoder->preferredCodec();
         $destination = artifact_path(sprintf('transcodes/%d/%s.%s', $bitRate, Ulid::generate(), $codec->extension()));
 
         try {

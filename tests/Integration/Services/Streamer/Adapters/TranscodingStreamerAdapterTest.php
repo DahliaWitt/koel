@@ -3,7 +3,6 @@
 namespace Tests\Integration\Services\Streamer\Adapters;
 
 use App\Enums\SongStorageType;
-use App\Enums\TranscodeCodec;
 use App\Models\Song;
 use App\Services\Streamer\Adapters\TranscodingStreamerAdapter;
 use App\Services\Transcoding\LocalTranscodingStrategy;
@@ -28,12 +27,12 @@ class TranscodingStreamerAdapterTest extends TestCase
     }
 
     #[Test]
-    public function usesAacByDefault(): void
+    public function usesDefaultBitRateWithoutConfig(): void
     {
         $this
             ->mock(LocalTranscodingStrategy::class)
             ->expects('getTranscodeLocation')
-            ->with($this->song, 128, TranscodeCodec::AAC)
+            ->with($this->song, 128)
             ->andReturn('https://example.com/transcode.m4a');
 
         $response = app(TranscodingStreamerAdapter::class)->stream($this->song);
@@ -42,17 +41,17 @@ class TranscodingStreamerAdapterTest extends TestCase
     }
 
     #[Test]
-    public function usesRequestedOpusCodec(): void
+    public function usesRequestedBitRate(): void
     {
         $this
             ->mock(LocalTranscodingStrategy::class)
             ->expects('getTranscodeLocation')
-            ->with($this->song, 256, TranscodeCodec::OPUS)
+            ->with($this->song, 256)
             ->andReturn('https://example.com/transcode.weba');
 
         $response = app(TranscodingStreamerAdapter::class)->stream(
             $this->song,
-            RequestedStreamingConfig::make(bitRate: 256, codec: TranscodeCodec::OPUS),
+            RequestedStreamingConfig::make(bitRate: 256),
         );
 
         self::assertTrue($response->isRedirect('https://example.com/transcode.weba'));
@@ -64,12 +63,12 @@ class TranscodingStreamerAdapterTest extends TestCase
         $this
             ->mock(LocalTranscodingStrategy::class)
             ->expects('getTranscodeLocation')
-            ->with($this->song, 128, TranscodeCodec::OPUS)
+            ->with($this->song, 128)
             ->andReturn('https://example.com/transcode.weba');
 
         $response = app(TranscodingStreamerAdapter::class)->stream(
             $this->song,
-            RequestedStreamingConfig::make(bitRate: null, codec: TranscodeCodec::OPUS),
+            RequestedStreamingConfig::make(bitRate: null),
         );
 
         self::assertTrue($response->isRedirect('https://example.com/transcode.weba'));

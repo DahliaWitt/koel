@@ -16,12 +16,11 @@ abstract class TranscodingStrategy
         protected Transcoder $transcoder,
     ) {}
 
-    protected function findTranscode(Song $song, int $bitRate, TranscodeCodec $codec): ?Transcode
+    protected function findTranscode(Song $song, int $bitRate): ?Transcode
     {
         return $this->transcodeRepository->findFirstWhere([
             'song_id' => $song->id,
             'bit_rate' => $bitRate,
-            'codec' => $codec,
         ]);
     }
 
@@ -42,11 +41,11 @@ abstract class TranscodingStrategy
                 'hash' => $hash,
                 'file_size' => $fileSize,
             ],
-            uniqueBy: ['song_id', 'bit_rate', 'codec'],
-            update: ['location', 'hash', 'file_size'],
+            uniqueBy: ['song_id', 'bit_rate'],
+            update: ['location', 'codec', 'hash', 'file_size'],
         );
 
-        return $this->findTranscode($song, $bitRate, $codec); // @phpstan-ignore-line
+        return $this->findTranscode($song, $bitRate); // @phpstan-ignore-line
     }
 
     protected function transcodeAndUpsert(
@@ -68,7 +67,7 @@ abstract class TranscodingStrategy
         );
     }
 
-    abstract public function getTranscodeLocation(Song $song, int $bitRate, TranscodeCodec $codec): string;
+    abstract public function getTranscodeLocation(Song $song, int $bitRate): string;
 
     abstract public function deleteTranscodeFile(string $location, SongStorageType $storageType): void;
 }

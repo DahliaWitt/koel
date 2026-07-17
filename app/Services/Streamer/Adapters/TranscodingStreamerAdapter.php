@@ -9,6 +9,7 @@ use App\Services\Transcoding\TranscodeStrategyFactory;
 use App\Values\RequestedStreamingConfig;
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class TranscodingStreamerAdapter implements StreamerAdapter
@@ -28,15 +29,15 @@ class TranscodingStreamerAdapter implements StreamerAdapter
             'ffmpeg not found or not executable.',
         );
 
-        $codec = $config->codec ?? TranscodeCodec::default();
         $bitRate = $config?->bitRate ?: $this->defaultBitRate;
 
-        $transcodePath = TranscodeStrategyFactory::make($song->storage)->getTranscodeLocation($song, $bitRate, $codec);
+        $transcodePath = TranscodeStrategyFactory::make($song->storage)->getTranscodeLocation($song, $bitRate);
 
         if (Str::startsWith($transcodePath, ['http://', 'https://'])) {
             return response()->redirectTo($transcodePath);
         }
 
-        $this->streamLocalPath($transcodePath, $codec->mimeType());
+        $mimeType = TranscodeCodec::fromExtension(File::extension($transcodePath))->mimeType();
+        $this->streamLocalPath($transcodePath, $mimeType);
     }
 }
